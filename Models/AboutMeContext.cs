@@ -11,4 +11,5 @@ public class AboutMeContext : DbContext
     }
 
     public DbSet<AboutMeItem> AboutMeItems { get; set; } = null!;
+
 }

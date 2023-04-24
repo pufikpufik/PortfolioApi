@@ -20,96 +20,96 @@ namespace PortfolioApi.Controllers
             _context = context;
         }
 
-        // GET: api/WorksItems
+        // GET: api/TodoItems
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<WorksItem>>> GetWorksItem()
+        public async Task<ActionResult<IEnumerable<WorksItemDTO>>> GetWorksItems()
         {
-          if (_context.WorksItem == null)
-          {
-              return NotFound();
-          }
-            return await _context.WorksItem.ToListAsync();
+            return await _context.WorksItems
+                .Select(x => ItemToDTO(x))
+                .ToListAsync();
         }
 
-        // GET: api/WorksItems/5
+        // GET: api/TodoItems/5
+        // <snippet_GetByID>
         [HttpGet("{id}")]
-        public async Task<ActionResult<WorksItem>> GetWorksItem(long id)
+        public async Task<ActionResult<WorksItemDTO>> GetWorksItem(long id)
         {
-          if (_context.WorksItem == null)
-          {
-              return NotFound();
-          }
-            var worksItem = await _context.WorksItem.FindAsync(id);
+            var worksItem = await _context.WorksItems.FindAsync(id);
 
             if (worksItem == null)
             {
                 return NotFound();
             }
 
-            return worksItem;
+            return ItemToDTO(worksItem);
         }
+        // </snippet_GetByID>
 
-        // PUT: api/WorksItems/5
+        // PUT: api/TodoItems/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // <snippet_Update>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutWorksItem(long id, WorksItem worksItem)
+        public async Task<IActionResult> PutWorksItem(long id, WorksItemDTO worksDTO)
         {
-            if (id != worksItem.Id)
+            if (id != worksDTO.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(worksItem).State = EntityState.Modified;
+            var worksItem = await _context.WorksItems.FindAsync(id);
+            if (worksItem == null)
+            {
+                return NotFound();
+            }
+
+            worksItem.Title = worksDTO.Title;
+
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException) when (!WorksItemExists(id))
             {
-                if (!WorksItemExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
             return NoContent();
         }
+        // </snippet_Update>
 
-        // POST: api/WorksItems
+        // POST: api/TodoItems
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // <snippet_Create>
         [HttpPost]
-        public async Task<ActionResult<WorksItem>> PostWorksItem(WorksItem worksItem)
+        public async Task<ActionResult<WorksItemDTO>> PostWorksItem(WorksItemDTO worksDTO)
         {
-          if (_context.WorksItem == null)
-          {
-              return Problem("Entity set 'WorksContext.WorksItem'  is null.");
-          }
-            _context.WorksItem.Add(worksItem);
+            var worksItem = new WorksItem
+            {
+                Title = worksDTO.Title
+            };
+
+            _context.WorksItems.Add(worksItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetWorksItem", new { id = worksItem.Id }, worksItem);
+            return CreatedAtAction(
+                nameof(GetWorksItem),
+                new { id = worksItem.Id },
+                ItemToDTO(worksItem));
         }
+        // </snippet_Create>
 
-        // DELETE: api/WorksItems/5
+        // DELETE: api/TodoItems/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteWorksItem(long id)
         {
-            if (_context.WorksItem == null)
-            {
-                return NotFound();
-            }
-            var worksItem = await _context.WorksItem.FindAsync(id);
+            var worksItem = await _context.WorksItems.FindAsync(id);
             if (worksItem == null)
             {
                 return NotFound();
             }
 
-            _context.WorksItem.Remove(worksItem);
+            _context.WorksItems.Remove(worksItem);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -117,7 +117,14 @@ namespace PortfolioApi.Controllers
 
         private bool WorksItemExists(long id)
         {
-            return (_context.WorksItem?.Any(e => e.Id == id)).GetValueOrDefault();
+            return _context.WorksItems.Any(e => e.Id == id);
         }
+
+        private static WorksItemDTO ItemToDTO(WorksItem worksItem) =>
+           new WorksItemDTO
+           {
+               Id = worksItem.Id,
+               Title = worksItem.Title,
+           };
     }
 }

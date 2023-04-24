@@ -22,23 +22,18 @@ namespace PortfolioApi.Controllers
 
         // GET: api/RecallItems
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<RecallItem>>> GetRecallItems()
+        public async Task<ActionResult<IEnumerable<RecallItemDTO>>> GetRecallItems()
         {
-          if (_context.RecallItems == null)
-          {
-              return NotFound();
-          }
-            return await _context.RecallItems.ToListAsync();
+            return await _context.RecallItems
+                .Select(x => ItemToDTO(x))
+                .ToListAsync();
         }
 
-        // GET: api/RecallItems/5
+        // GET: api/TodoItems/5
+        // <snippet_GetByID>
         [HttpGet("{id}")]
-        public async Task<ActionResult<RecallItem>> GetRecallItem(int id)
+        public async Task<ActionResult<RecallItemDTO>> GetRecallItem(long id)
         {
-          if (_context.RecallItems == null)
-          {
-              return NotFound();
-          }
             var recallItem = await _context.RecallItems.FindAsync(id);
 
             if (recallItem == null)
@@ -46,63 +41,68 @@ namespace PortfolioApi.Controllers
                 return NotFound();
             }
 
-            return recallItem;
+            return ItemToDTO(recallItem);
         }
+        // </snippet_GetByID>
 
-        // PUT: api/RecallItems/5
+        // PUT: api/TodoItems/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // <snippet_Update>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutRecallItem(int id, RecallItem recallItem)
+        public async Task<IActionResult> PutRecallItem(long id, RecallItemDTO recallDTO)
         {
-            if (id != recallItem.Id)
+            if (id != recallDTO.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(recallItem).State = EntityState.Modified;
+            var recallItem = await _context.RecallItems.FindAsync(id);
+            if (recallItem == null)
+            {
+                return NotFound();
+            }
+
+            recallItem.Name = recallDTO.Name;
+
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException) when (!RecallItemExists(id))
             {
-                if (!RecallItemExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
             return NoContent();
         }
+        // </snippet_Update>
 
-        // POST: api/RecallItems
+        // POST: api/TodoItems
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // <snippet_Create>
         [HttpPost]
-        public async Task<ActionResult<RecallItem>> PostRecallItem(RecallItem recallItem)
+        public async Task<ActionResult<RecallItemDTO>> PostRecallItem(RecallItemDTO recallDTO)
         {
-          if (_context.RecallItems == null)
-          {
-              return Problem("Entity set 'RecallContext.RecallItems'  is null.");
-          }
+            var recallItem = new RecallItem
+            {
+                Name = recallDTO.Name
+            };
+
             _context.RecallItems.Add(recallItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetRecallItem", new { id = recallItem.Id }, recallItem);
+            return CreatedAtAction(
+                nameof(GetRecallItem),
+                new { id = recallItem.Id },
+                ItemToDTO(recallItem));
         }
+        // </snippet_Create>
 
-        // DELETE: api/RecallItems/5
+        // DELETE: api/TodoItems/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteRecallItem(int id)
+        public async Task<IActionResult> DeleteRecallItem(long id)
         {
-            if (_context.RecallItems == null)
-            {
-                return NotFound();
-            }
             var recallItem = await _context.RecallItems.FindAsync(id);
             if (recallItem == null)
             {
@@ -115,9 +115,17 @@ namespace PortfolioApi.Controllers
             return NoContent();
         }
 
-        private bool RecallItemExists(int id)
+        private bool RecallItemExists(long id)
         {
-            return (_context.RecallItems?.Any(e => e.Id == id)).GetValueOrDefault();
+            return _context.RecallItems.Any(e => e.Id == id);
         }
+
+        private static RecallItemDTO ItemToDTO(RecallItem recallItem) =>
+           new RecallItemDTO
+           {
+               Id = recallItem.Id,
+               Name = recallItem.Name,
+
+           };
     }
 }

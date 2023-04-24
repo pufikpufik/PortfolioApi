@@ -20,104 +20,113 @@ namespace PortfolioApi.Controllers
             _context = context;
         }
 
-        // GET: api/AboutMeItems
+        // GET: api/TodoItems
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AboutMeItem>>> GetAboutMeItems()
+        public async Task<ActionResult<IEnumerable<AboutMeItemDTO>>> GetAboutMeItems()
         {
-          if (_context.AboutMeItems == null)
-          {
-              return NotFound();
-          }
-            return await _context.AboutMeItems.ToListAsync();
+            return await _context.AboutMeItems
+                .Select(x => ItemToDTO(x))
+                .ToListAsync();
         }
 
-        // GET: api/AboutMeItems/5
+        // GET: api/TodoItems/5
+        // <snippet_GetByID>
         [HttpGet("{id}")]
-        public async Task<ActionResult<AboutMeItem>> GetAboutMeItem(int id)
+        public async Task<ActionResult<AboutMeItemDTO>> GetAboutMeItem(long id)
         {
-          if (_context.AboutMeItems == null)
-          {
-              return NotFound();
-          }
-            var aboutMeItem = await _context.AboutMeItems.FindAsync(id);
+            var aboutmeItem = await _context.AboutMeItems.FindAsync(id);
 
-            if (aboutMeItem == null)
+            if (aboutmeItem == null)
             {
                 return NotFound();
             }
 
-            return aboutMeItem;
+            return ItemToDTO(aboutmeItem);
         }
+        // </snippet_GetByID>
 
-        // PUT: api/AboutMeItems/5
+        // PUT: api/TodoItems/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // <snippet_Update>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAboutMeItem(int id, AboutMeItem aboutMeItem)
+        public async Task<IActionResult> PutAboutMeItem(long id, AboutMeItemDTO aboutmeDTO)
         {
-            if (id != aboutMeItem.Id)
+            if (id != aboutmeDTO.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(aboutMeItem).State = EntityState.Modified;
+            var aboutmeItem = await _context.AboutMeItems.FindAsync(id);
+            if (aboutmeItem == null)
+            {
+                return NotFound();
+            }
+
+            aboutmeItem.Name = aboutmeDTO.Name;
+          
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException) when (!AboutMeItemExists(id))
             {
-                if (!AboutMeItemExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
             return NoContent();
         }
+        // </snippet_Update>
 
-        // POST: api/AboutMeItems
+        // POST: api/TodoItems
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // <snippet_Create>
         [HttpPost]
-        public async Task<ActionResult<AboutMeItem>> PostAboutMeItem(AboutMeItem aboutMeItem)
+        public async Task<ActionResult<AboutMeItemDTO>> PostAboutMeItem(AboutMeItemDTO aboutmeDTO)
         {
-          if (_context.AboutMeItems == null)
-          {
-              return Problem("Entity set 'AboutMeContext.AboutMeItems'  is null.");
-          }
-            _context.AboutMeItems.Add(aboutMeItem);
+            var aboutmeItem = new AboutMeItem
+            {
+                
+                Name = aboutmeDTO.Name
+            };
+
+            _context.AboutMeItems.Add(aboutmeItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetAboutMeItem", new { id = aboutMeItem.Id }, aboutMeItem);
+            return CreatedAtAction(
+                nameof(GetAboutMeItem),
+                new { id = aboutmeItem.Id },
+                ItemToDTO(aboutmeItem));
         }
+        // </snippet_Create>
 
-        // DELETE: api/AboutMeItems/5
+        // DELETE: api/TodoItems/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAboutMeItem(int id)
+        public async Task<IActionResult> DeleteTodoItem(long id)
         {
-            if (_context.AboutMeItems == null)
-            {
-                return NotFound();
-            }
-            var aboutMeItem = await _context.AboutMeItems.FindAsync(id);
-            if (aboutMeItem == null)
+            var aboutmeItem = await _context.AboutMeItems.FindAsync(id);
+            if (aboutmeItem == null)
             {
                 return NotFound();
             }
 
-            _context.AboutMeItems.Remove(aboutMeItem);
+            _context.AboutMeItems.Remove(aboutmeItem);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool AboutMeItemExists(int id)
+        private bool AboutMeItemExists(long id)
         {
-            return (_context.AboutMeItems?.Any(e => e.Id == id)).GetValueOrDefault();
+            return _context.AboutMeItems.Any(e => e.Id == id);
         }
+
+        private static AboutMeItemDTO ItemToDTO(AboutMeItem aboutmeItem) =>
+           new AboutMeItemDTO
+           {
+               Id = aboutmeItem.Id,
+               Name = aboutmeItem.Name,
+        
+           };
     }
-}
+    }

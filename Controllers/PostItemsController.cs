@@ -20,25 +20,21 @@ namespace PortfolioApi.Controllers
             _context = context;
         }
 
-        // GET: api/PostItems
+
+        // GET: api/TodoItems
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PostItem>>> GetPostItems()
+        public async Task<ActionResult<IEnumerable<PostItemDTO>>> GetPostItems()
         {
-          if (_context.PostItems == null)
-          {
-              return NotFound();
-          }
-            return await _context.PostItems.ToListAsync();
+            return await _context.PostItems
+                .Select(x => ItemToDTO(x))
+                .ToListAsync();
         }
 
-        // GET: api/PostItems/5
+        // GET: api/TodoItems/5
+        // <snippet_GetByID>
         [HttpGet("{id}")]
-        public async Task<ActionResult<PostItem>> GetPostItem(long id)
+        public async Task<ActionResult<PostItemDTO>> GetPostItem(long id)
         {
-          if (_context.PostItems == null)
-          {
-              return NotFound();
-          }
             var postItem = await _context.PostItems.FindAsync(id);
 
             if (postItem == null)
@@ -46,63 +42,69 @@ namespace PortfolioApi.Controllers
                 return NotFound();
             }
 
-            return postItem;
+            return ItemToDTO(postItem);
         }
+        // </snippet_GetByID>
 
-        // PUT: api/PostItems/5
+        // PUT: api/TodoItems/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // <snippet_Update>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPostItem(long id, PostItem postItem)
+        public async Task<IActionResult> PutPostItem(long id, PostItemDTO postDTO)
         {
-            if (id != postItem.Id)
+            if (id != postDTO.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(postItem).State = EntityState.Modified;
+            var postItem = await _context.PostItems.FindAsync(id);
+            if (postItem == null)
+            {
+                return NotFound();
+            }
+
+            postItem.Title = postDTO.Title;
+
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException) when (!PostItemExists(id))
             {
-                if (!PostItemExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
             return NoContent();
         }
+        // </snippet_Update>
 
-        // POST: api/PostItems
+        // POST: api/TodoItems
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // <snippet_Create>
         [HttpPost]
-        public async Task<ActionResult<PostItem>> PostPostItem(PostItem postItem)
+        public async Task<ActionResult<PostItemDTO>> PostTodoItem(PostItemDTO postDTO)
         {
-          if (_context.PostItems == null)
-          {
-              return Problem("Entity set 'PostContext.PostItems'  is null.");
-          }
+            var postItem = new PostItem
+            {
+
+                Title = postDTO.Title
+            };
+
             _context.PostItems.Add(postItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetPostItem", new { id = postItem.Id }, postItem);
+            return CreatedAtAction(
+                nameof(GetPostItem),
+                new { id = postItem.Id },
+                ItemToDTO(postItem));
         }
+        // </snippet_Create>
 
-        // DELETE: api/PostItems/5
+        // DELETE: api/TodoItems/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePostItem(long id)
         {
-            if (_context.PostItems == null)
-            {
-                return NotFound();
-            }
             var postItem = await _context.PostItems.FindAsync(id);
             if (postItem == null)
             {
@@ -117,7 +119,15 @@ namespace PortfolioApi.Controllers
 
         private bool PostItemExists(long id)
         {
-            return (_context.PostItems?.Any(e => e.Id == id)).GetValueOrDefault();
+            return _context.PostItems.Any(e => e.Id == id);
         }
+
+        private static PostItemDTO ItemToDTO(PostItem postItem) =>
+           new PostItemDTO
+           {
+               Id = postItem.Id,
+               Title = postItem.Title,
+
+           };
     }
 }

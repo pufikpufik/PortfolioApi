@@ -11,8 +11,7 @@ public class WorksContext : DbContext
     {
     }
 
-    public DbSet<PostItem> PostItems { get; set; } = null!;
+    public DbSet<WorksItem> WorksItems { get; set; } = null!;
 
-    public DbSet<PortfolioApi.Models.WorksItem> WorksItem { get; set; } = default!;
 
 }

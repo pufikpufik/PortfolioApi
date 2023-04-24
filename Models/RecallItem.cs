@@ -7,6 +7,7 @@
         public string? Surname { get; set; }
 
         public string? Comment { get; set; }
+        public string? Secret { get; set; }
 
 
     }
