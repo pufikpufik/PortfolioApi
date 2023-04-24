@@ -22,7 +22,7 @@ namespace PortfolioApi.Controllers
 
         // GET: api/PostItems
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PostItem>>> GetTodoItems()
+        public async Task<ActionResult<IEnumerable<PostItem>>> GetPostItems()
         {
           if (_context.PostItems == null)
           {
@@ -35,13 +35,17 @@ namespace PortfolioApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<PostItem>> GetPostItem(long id)
         {
+          if (_context.PostItems == null)
+          {
+              return NotFound();
+          }
             var postItem = await _context.PostItems.FindAsync(id);
 
             if (postItem == null)
             {
                 return NotFound();
             }
-                   
+
             return postItem;
         }
 
@@ -81,11 +85,14 @@ namespace PortfolioApi.Controllers
         [HttpPost]
         public async Task<ActionResult<PostItem>> PostPostItem(PostItem postItem)
         {
+          if (_context.PostItems == null)
+          {
+              return Problem("Entity set 'PostContext.PostItems'  is null.");
+          }
             _context.PostItems.Add(postItem);
             await _context.SaveChangesAsync();
 
-            //    return CreatedAtAction("GetPostItem", new { id = postItem.Id }, postItem);
-            return CreatedAtAction(nameof(GetPostItem), new { id = postItem.Id }, postItem);
+            return CreatedAtAction("GetPostItem", new { id = postItem.Id }, postItem);
         }
 
         // DELETE: api/PostItems/5
