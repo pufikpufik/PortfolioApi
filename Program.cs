@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PortfolioApi.Models;
+using PortfolioApi.DBContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ builder.Services.AddDbContext<AboutMeContext>(opt =>
     opt.UseInMemoryDatabase("AboutMeList"));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<DbContextPost>();
 
 var app = builder.Build();
 

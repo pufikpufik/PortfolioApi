@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PortfolioApi.Models;
 
 namespace PortfolioApi.Interface
 {
-    public interface DbContext
+    public interface IDbContextPost
     {
-        DbSet<Context> DbContexts { get; set; }
+       public DbSet<PostItem> Posts { get; set; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }
 }
