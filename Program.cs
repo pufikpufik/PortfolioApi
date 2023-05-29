@@ -1,31 +1,23 @@
 using Microsoft.EntityFrameworkCore;
 using PortfolioApi.Models;
-using PortfolioApi.DBContext;
+using DotNetApi.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-//builder.Services.AddDbContext<PostContext>(opt =>
-    //opt.UseInMemoryDatabase("PostList"));
-//builder.Services.AddDbContext<WorksContext>(opt =>
-//    opt.UseInMemoryDatabase("WorksList"));
-//builder.Services.AddDbContext<RecallContext>(opt =>
-//    opt.UseInMemoryDatabase("RecallList"));
-//builder.Services.AddDbContext<AboutMeContext>(opt =>
-//    opt.UseInMemoryDatabase("AboutMeList"));
-//builder.Services.AddEndpointsApiExplorer();
-//builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<DbContextPost>();
+builder.Services.AddDbContext<DataDbContext>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-//if (app.Environment.IsDevelopment())
-//{
-  //  app.UseSwagger();
- //   app.UseSwaggerUI();
-//}
+if (app.Environment.IsDevelopment())
+{
+   app.UseSwagger();
+   app.UseSwaggerUI();
+}
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
