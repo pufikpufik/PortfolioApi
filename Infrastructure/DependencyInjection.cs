@@ -22,7 +22,7 @@ namespace PortfolioApi.Infrastructure
             }
             services.AddDbContext<DbContextPost>(options =>
             {
-                options.UseSqlServer(connectionString);
+                options.UseNpgsql(connectionString);
             });
             services.AddScoped<IDbContextPost>(provider =>
             provider.GetService<DbContextPost>());
